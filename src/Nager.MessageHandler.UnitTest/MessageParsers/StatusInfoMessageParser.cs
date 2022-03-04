@@ -1,4 +1,5 @@
 ﻿using Nager.MessageHandler.UnitTest.Messages;
+using System;
 
 namespace Nager.MessageHandler.UnitTest.MessageParsers
 {
@@ -6,7 +7,7 @@ namespace Nager.MessageHandler.UnitTest.MessageParsers
     {
         private readonly byte _messageTypeToken = 0x11;
 
-        public MessageBase Parse(byte[] data)
+        public MessageBase Parse(Span<byte> data)
         {
             if (data[1] != this._messageTypeToken)
             {

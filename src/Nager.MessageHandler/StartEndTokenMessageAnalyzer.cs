@@ -15,17 +15,18 @@ namespace Nager.MessageHandler
             this._endToken = endToken;
         }
 
-        public DataAnalyzeResult Analyze(byte[] data)
+        public DataAnalyzeResult Analyze(Span<byte> data)
         {
-            var messageEndIndex = Array.IndexOf(data, this._endToken);
+            var messageEndIndex = data.IndexOf(this._endToken);
             if (messageEndIndex == -1)
             {
                 return new DataAnalyzeResult { MessageAvailable = false };
             }
 
-            var messageStartIndex = Array.LastIndexOf(data, this._startToken, messageEndIndex);
+            var messageStartIndex = data.Slice(0, messageEndIndex).IndexOf(this._startToken);
             if (messageStartIndex == -1)
             {
+                // Truncated message without startToken available
                 return new DataAnalyzeResult { MessageAvailable = true, MessageEndIndex = messageEndIndex + 1 };
             }
 

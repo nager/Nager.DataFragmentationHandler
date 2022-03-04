@@ -10,6 +10,7 @@ namespace Nager.MessageHandler
         private readonly ILogger<MessageHandler> _logger;
         private readonly IMessageAnalyzer _messageAnalyzer;
         private readonly IMessageParser[] _messageParsers;
+        private readonly int _maxMessageSize;
 
         private readonly ConcurrentQueue<byte> _buffer = new ConcurrentQueue<byte>();
 
@@ -18,11 +19,13 @@ namespace Nager.MessageHandler
         public MessageHandler(
             ILogger<MessageHandler> logger,
             IMessageAnalyzer messageAnalyzer,
-            IMessageParser[] messageParsers)
+            IMessageParser[] messageParsers,
+            int maxMessageSize = 100)
         {
             this._logger = logger;
             this._messageAnalyzer = messageAnalyzer;
             this._messageParsers = messageParsers;
+            this._maxMessageSize = maxMessageSize;
         }
 
         public void AddData(byte[] rawData)
@@ -34,13 +37,13 @@ namespace Nager.MessageHandler
 
             while (this.ProcessBuffer())
             {
-                //process
+                //additional processing steps required
             }
         }
 
         private bool ProcessBuffer()
         {
-            var data = this._buffer.Take(100).ToArray();
+            var data = this._buffer.Take(this._maxMessageSize).ToArray().AsSpan();
 
             var analyzeResult = this._messageAnalyzer.Analyze(data);
             if (!analyzeResult.MessageAvailable)
@@ -48,14 +51,15 @@ namespace Nager.MessageHandler
                 return false;
             }
 
-            if (analyzeResult.MessageAvailable && analyzeResult.MessageLength == 0)
+            if (analyzeResult.MessageAvailable &&
+                analyzeResult.MessageLength == 0)
             {
                 this._logger?.LogInformation($"{nameof(ProcessBuffer)} - Corrupt message remove");
                 this.RemoveLastMessage(analyzeResult.MessageEndIndex);
                 return true;
             }
 
-            var messageData = data.Skip(analyzeResult.MessageStartIndex).Take(analyzeResult.MessageLength).ToArray();
+            var messageData = data.Slice(analyzeResult.MessageStartIndex, analyzeResult.MessageLength);
 
             MessageBase message = default;
             foreach (var messageParser in this._messageParsers)
@@ -69,7 +73,7 @@ namespace Nager.MessageHandler
 
             if (message == default)
             {
-                var hex = BitConverter.ToString(messageData);
+                var hex = BitConverter.ToString(messageData.ToArray());
                 this._logger?.LogDebug($"{nameof(ProcessBuffer)} - Cannot parse message {hex}");
             }
             else

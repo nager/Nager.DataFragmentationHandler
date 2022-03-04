@@ -1,7 +1,9 @@
-﻿namespace Nager.MessageHandler
+﻿using System;
+
+namespace Nager.MessageHandler
 {
     public interface IMessageParser
     {
-        MessageBase Parse(byte[] data);
+        MessageBase Parse(Span<byte> data);
     }
 }

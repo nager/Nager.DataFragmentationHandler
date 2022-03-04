@@ -11,7 +11,7 @@ namespace Nager.MessageHandler.UnitTest
     public class MessageHandlerTest
     {
         private int _receivedMessageCount = 0;
-        private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10);
+        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(0);
 
         [TestMethod]
         public void MessageHandler_CompleteMessage()
@@ -27,8 +27,10 @@ namespace Nager.MessageHandler.UnitTest
             var messageHandler = new MessageHandler(loggerMock.Object, messageAnalyzer, messageParsers);
             messageHandler.NewMessage += NewMessage;
             messageHandler.AddData(new byte[] { 0x01, 0x10, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x02 });
-            this._semaphoreSlim.Wait();
 
+            var isTimeout = !this._semaphoreSlim.Wait(1000);
+
+            Assert.IsFalse(isTimeout, "Run into timeout");
             Assert.AreEqual(1, this._receivedMessageCount);
         }
 
@@ -48,8 +50,10 @@ namespace Nager.MessageHandler.UnitTest
             messageHandler.AddData(new byte[] { 0x01 });
             messageHandler.AddData(new byte[] { 0x10, 0x68, 0x65 });
             messageHandler.AddData(new byte[] { 0x6c, 0x6c, 0x6f, 0x02 });
-            this._semaphoreSlim.Wait(1000);
 
+            var isTimeout = !this._semaphoreSlim.Wait(1000);
+
+            Assert.IsFalse(isTimeout, "Run into timeout");
             Assert.AreEqual(1, this._receivedMessageCount);
         }
 
@@ -69,8 +73,10 @@ namespace Nager.MessageHandler.UnitTest
             messageHandler.AddData(new byte[] { 0x50, 0x02, 0x01 });
             messageHandler.AddData(new byte[] { 0x10, 0x68, 0x65 });
             messageHandler.AddData(new byte[] { 0x6c, 0x6c, 0x6f, 0x02 });
-            this._semaphoreSlim.Wait(1000);
 
+            var isTimeout = !this._semaphoreSlim.Wait(1000);
+
+            Assert.IsFalse(isTimeout, "Run into timeout");
             Assert.AreEqual(1, this._receivedMessageCount);
         }
 
@@ -80,13 +86,13 @@ namespace Nager.MessageHandler.UnitTest
             {
                 if (message is HelloMessage helloMessage)
                 {
-                    Debug.WriteLine(helloMessage.Message);
+                    Trace.WriteLine(helloMessage.Message);
                     return;
                 }
 
                 if (message is StatusInfoMessage statusInfoMessage)
                 {
-                    Debug.WriteLine(statusInfoMessage.IsMotorActive);
+                    Trace.WriteLine(statusInfoMessage.IsMotorActive);
                     return;
                 }
             }

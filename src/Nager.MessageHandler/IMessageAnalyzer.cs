@@ -1,7 +1,9 @@
-﻿namespace Nager.MessageHandler
+﻿using System;
+
+namespace Nager.MessageHandler
 {
     public interface IMessageAnalyzer
     {
-        DataAnalyzeResult Analyze(byte[] data);
+        DataAnalyzeResult Analyze(Span<byte> data);
     }
 }
