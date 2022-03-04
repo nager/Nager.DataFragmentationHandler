@@ -27,12 +27,13 @@ namespace Nager.MessageHandler
             if (messageStartIndex == -1)
             {
                 // Truncated message without startToken available
-                return new DataAnalyzeResult { MessageAvailable = true, MessageEndIndex = messageEndIndex + 1 };
+                return new DataAnalyzeResult { MessageAvailable = true, MessageComplete = false, MessageEndIndex = messageEndIndex + 1 };
             }
 
             return new DataAnalyzeResult
             {
                 MessageAvailable = true,
+                MessageComplete = true,
                 MessageStartIndex = messageStartIndex,
                 MessageEndIndex = messageEndIndex + 1
             };

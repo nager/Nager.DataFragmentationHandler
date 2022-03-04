@@ -27,6 +27,7 @@ namespace Nager.MessageHandler.UnitTest
             var messageHandler = new MessageHandler(loggerMock.Object, messageAnalyzer, messageParsers);
             messageHandler.NewMessage += NewMessage;
             messageHandler.AddData(new byte[] { 0x01, 0x10, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x02 });
+            messageHandler.NewMessage -= NewMessage;
 
             var isTimeout = !this._semaphoreSlim.Wait(1000);
 
@@ -50,6 +51,7 @@ namespace Nager.MessageHandler.UnitTest
             messageHandler.AddData(new byte[] { 0x01 });
             messageHandler.AddData(new byte[] { 0x10, 0x68, 0x65 });
             messageHandler.AddData(new byte[] { 0x6c, 0x6c, 0x6f, 0x02 });
+            messageHandler.NewMessage -= NewMessage;
 
             var isTimeout = !this._semaphoreSlim.Wait(1000);
 
@@ -73,11 +75,64 @@ namespace Nager.MessageHandler.UnitTest
             messageHandler.AddData(new byte[] { 0x50, 0x02, 0x01 });
             messageHandler.AddData(new byte[] { 0x10, 0x68, 0x65 });
             messageHandler.AddData(new byte[] { 0x6c, 0x6c, 0x6f, 0x02 });
+            messageHandler.NewMessage -= NewMessage;
 
             var isTimeout = !this._semaphoreSlim.Wait(1000);
 
             Assert.IsFalse(isTimeout, "Run into timeout");
             Assert.AreEqual(1, this._receivedMessageCount);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(BufferSizeTooSmallException))]
+        public void MessageHandler_BufferSizeTooSmall()
+        {
+            var loggerMock = LoggerHelper.GetLogger<MessageHandler>();
+            var messageAnalyzer = new StartEndTokenMessageAnalyzer(0x01, 0x02);
+            var messageParsers = new IMessageParser[0];
+
+            var messageHandler = new MessageHandler(loggerMock.Object, messageAnalyzer, messageParsers, bufferSize: 5);
+            messageHandler.AddData(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09 });
+        }
+
+        [TestMethod]
+        public void MessageHandler_BufferCleanupViaMove()
+        {
+            var loggerMock = LoggerHelper.GetLogger<MessageHandler>();
+            var messageAnalyzer = new StartEndTokenMessageAnalyzer(0x01, 0xFF);
+            var messageParsers = new IMessageParser[]
+            {
+                new HelloMessageParser(),
+                new StatusInfoMessageParser()
+            };
+
+            var messageHandler = new MessageHandler(loggerMock.Object, messageAnalyzer, messageParsers, bufferSize: 9);
+            messageHandler.NewMessage += NewMessage;
+            messageHandler.AddData(new byte[] { 0x01, 0x11, 0xFF, 0x01, 0x11 });
+            messageHandler.AddData(new byte[] { 0xFF, 0x02, 0x03, 0x04, 0x05 });
+            messageHandler.NewMessage -= NewMessage;
+
+            //TODO: Add Assert logic
+        }
+
+        [TestMethod]
+        public void MessageHandler_BufferCleanupViaRemove()
+        {
+            var loggerMock = LoggerHelper.GetLogger<MessageHandler>();
+            var messageAnalyzer = new StartEndTokenMessageAnalyzer(0xF1, 0xFF);
+            var messageParsers = new IMessageParser[]
+            {
+                new HelloMessageParser(),
+                new StatusInfoMessageParser()
+            };
+
+            var messageHandler = new MessageHandler(loggerMock.Object, messageAnalyzer, messageParsers, bufferSize: 5);
+            messageHandler.NewMessage += NewMessage;
+            messageHandler.AddData(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05 });
+            messageHandler.AddData(new byte[] { 0xF1, 0x11, 0xFF });
+            messageHandler.NewMessage -= NewMessage;
+
+            //TODO: Add Assert logic
         }
 
         private void NewMessage(MessageBase message)

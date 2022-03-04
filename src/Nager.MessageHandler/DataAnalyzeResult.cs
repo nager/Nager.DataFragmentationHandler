@@ -3,6 +3,7 @@
     public class DataAnalyzeResult
     {
         public bool MessageAvailable { get; set; }
+        public bool MessageComplete { get; set; }
         public int MessageStartIndex { get; set; }
         public int MessageEndIndex { get; set; }
 

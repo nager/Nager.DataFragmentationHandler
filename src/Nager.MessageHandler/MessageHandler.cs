@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Concurrent;
-using System.Linq;
 
 namespace Nager.MessageHandler
 {
@@ -10,9 +8,11 @@ namespace Nager.MessageHandler
         private readonly ILogger<MessageHandler> _logger;
         private readonly IMessageAnalyzer _messageAnalyzer;
         private readonly IMessageParser[] _messageParsers;
-        private readonly int _maxMessageSize;
 
-        private readonly ConcurrentQueue<byte> _buffer = new ConcurrentQueue<byte>();
+        private readonly byte[] _buffer;
+        private int _bufferStartPosition = 0;
+        private int _bufferEndPosition = 0;
+        private int _bufferDataLength => this._bufferEndPosition - this._bufferStartPosition;
 
         public event Action<MessageBase> NewMessage;
 
@@ -20,20 +20,38 @@ namespace Nager.MessageHandler
             ILogger<MessageHandler> logger,
             IMessageAnalyzer messageAnalyzer,
             IMessageParser[] messageParsers,
-            int maxMessageSize = 100)
+            int bufferSize = 1000)
         {
             this._logger = logger;
             this._messageAnalyzer = messageAnalyzer;
             this._messageParsers = messageParsers;
-            this._maxMessageSize = maxMessageSize;
+
+            this._buffer = new byte[bufferSize];
         }
 
         public void AddData(byte[] rawData)
         {
-            foreach (var b in rawData)
+            if (rawData.Length > this._buffer.Length)
             {
-                this._buffer.Enqueue(b);
+                throw new BufferSizeTooSmallException();
             }
+
+            //Buffer cleanup required
+            while (rawData.Length + this._bufferEndPosition > this._buffer.Length)
+            {
+                if (this.CleanupViaMove())
+                {
+                    continue;
+                }
+
+                var requiredSize = rawData.Length - (this._buffer.Length - this._bufferEndPosition);
+                this.CleanupViaRemove(requiredSize);
+
+                break;
+            }
+
+            Array.Copy(rawData, 0, this._buffer, this._bufferEndPosition, rawData.Length);
+            this._bufferEndPosition += rawData.Length;
 
             while (this.ProcessBuffer())
             {
@@ -41,9 +59,56 @@ namespace Nager.MessageHandler
             }
         }
 
+        private bool CleanupViaMove()
+        {
+            if (this._bufferStartPosition == 0)
+            {
+                return false;
+            }
+
+            /*
+             * Move data to the start of the buffer
+             * 
+             * BUFFER
+             * ┌──────────────────────────┐
+             * |                  ┌──────┐|
+             * | <--------------- | DATA ||
+             * |                  └──────┘|
+             * └──────────────────────────┘
+            */
+
+            var bufferDataLength = this._bufferDataLength;
+            Array.Copy(this._buffer, this._bufferStartPosition, this._buffer, 0, this._bufferDataLength);
+            this._bufferStartPosition = 0;
+            this._bufferEndPosition = bufferDataLength;
+
+            return true;
+        }
+
+        private void CleanupViaRemove(int requiredSize)
+        {
+            /*
+             * Remove data at the beginning of the buffer
+             * 
+             * BUFFER
+             * ┌──────────────────────────┐
+             * |┌──────────────────────┐  |
+             * ||░░░       DATA        |  |
+             * |└──────────────────────┘  |
+             * |                       ┌──────┐
+             * |                       | DATA |
+             * |                       └──────┘
+             * └──────────────────────────┘
+            */
+
+            var bufferDataLength = this._bufferDataLength - requiredSize;
+            Array.Copy(this._buffer, 0, this._buffer, requiredSize, bufferDataLength);
+            this._bufferEndPosition = bufferDataLength;
+        }
+
         private bool ProcessBuffer()
         {
-            var data = this._buffer.Take(this._maxMessageSize).ToArray().AsSpan();
+            var data = this._buffer.AsSpan().Slice(this._bufferStartPosition, this._bufferDataLength);
 
             var analyzeResult = this._messageAnalyzer.Analyze(data);
             if (!analyzeResult.MessageAvailable)
@@ -52,7 +117,7 @@ namespace Nager.MessageHandler
             }
 
             if (analyzeResult.MessageAvailable &&
-                analyzeResult.MessageLength == 0)
+                !analyzeResult.MessageComplete)
             {
                 this._logger?.LogInformation($"{nameof(ProcessBuffer)} - Corrupt message remove");
                 this.RemoveLastMessage(analyzeResult.MessageEndIndex);
@@ -83,15 +148,12 @@ namespace Nager.MessageHandler
 
             this.RemoveLastMessage(analyzeResult.MessageEndIndex);
 
-            return true;
+            return this._bufferStartPosition != this._bufferEndPosition;
         }
 
         private void RemoveLastMessage(int messageLength)
         {
-            for (var i = 0; i < messageLength; i++)
-            {
-                this._buffer.TryDequeue(out var _);
-            }
+            this._bufferStartPosition += messageLength;
         }
     }
 }
