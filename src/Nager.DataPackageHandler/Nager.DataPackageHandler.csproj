@@ -1,11 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Authors>Tino Hager</Authors>
+    <Company>nager.at</Company>
+    <Description>Process raw bytes to DataPackages with a buffer</Description>
+    
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/nager/Nager.DataPackageHandler</PackageProjectUrl>
+    <PackageTags></PackageTags>
+    
+    <RepositoryUrl>https://github.com/nager/Nager.DataPackageHandler</RepositoryUrl>
+    
     <TargetFramework>netstandard2.1</TargetFramework>
+    
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\LICENSE.md" Pack="true" PackagePath="LICENSE.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\doc\icon.png" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+	
 </Project>
