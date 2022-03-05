@@ -1,8 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Nager.MessageHandler.UnitTest.Helpers;
+using Nager.DataPackageHandler.UnitTest.Helpers;
 using System.Threading;
 
-namespace Nager.MessageHandler.UnitTest
+namespace Nager.DataPackageHandler.UnitTest
 {
     [TestClass]
     public class StartEndTokenDataPackageHandlerTest

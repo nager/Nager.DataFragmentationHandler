@@ -1,4 +1,4 @@
-﻿namespace Nager.MessageHandler
+﻿namespace Nager.DataPackageHandler
 {
     public class DataPackageAnalyzeResult
     {

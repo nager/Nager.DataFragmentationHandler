@@ -3,7 +3,7 @@ using Moq;
 using System;
 using System.Diagnostics;
 
-namespace Nager.MessageHandler.UnitTest.Helpers
+namespace Nager.DataPackageHandler.UnitTest.Helpers
 {
     public static class LoggerHelper
     {

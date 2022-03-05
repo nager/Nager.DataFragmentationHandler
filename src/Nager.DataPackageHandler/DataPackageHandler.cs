@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 
-namespace Nager.MessageHandler
+namespace Nager.DataPackageHandler
 {
     public class DataPackageHandler
     {
         private readonly ILogger<DataPackageHandler> _logger;
-        private readonly IDataPackageAnalyzer _messageAnalyzer;
+        private readonly IDataPackageAnalyzer _dataPackageAnalyzer;
 
         private readonly byte[] _buffer;
         private int _bufferStartPosition = 0;
@@ -17,11 +17,11 @@ namespace Nager.MessageHandler
 
         public DataPackageHandler(
             ILogger<DataPackageHandler> logger,
-            IDataPackageAnalyzer messageAnalyzer,
+            IDataPackageAnalyzer dataPackageAnalyzer,
             int bufferSize = 1000)
         {
             this._logger = logger;
-            this._messageAnalyzer = messageAnalyzer;
+            this._dataPackageAnalyzer = dataPackageAnalyzer;
 
             this._buffer = new byte[bufferSize];
         }
@@ -107,7 +107,7 @@ namespace Nager.MessageHandler
         {
             var data = this._buffer.AsSpan().Slice(this._bufferStartPosition, this.BufferDataLength);
 
-            var analyzeResult = this._messageAnalyzer.Analyze(data);
+            var analyzeResult = this._dataPackageAnalyzer.Analyze(data);
             switch (analyzeResult.DataPackageStatus)
             {
                 case DataPackageStatus.NotAvailable:
@@ -124,9 +124,9 @@ namespace Nager.MessageHandler
                     throw new NotImplementedException("DataAnalyzeStatus is unknown");
             }
 
-            var messageData = data.Slice(analyzeResult.ContentStartIndex, analyzeResult.ContentEndIndex - analyzeResult.ContentStartIndex);
+            var dataPackage = data.Slice(analyzeResult.ContentStartIndex, analyzeResult.ContentEndIndex - analyzeResult.ContentStartIndex);
 
-            this.NewDataPackage?.Invoke(messageData.ToArray());
+            this.NewDataPackage?.Invoke(dataPackage.ToArray());
 
             this.RemoveLastMessage(analyzeResult.DataPackageEndIndex);
 

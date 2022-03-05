@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nager.MessageHandler
+namespace Nager.DataPackageHandler
 {
     public class BufferSizeTooSmallException : Exception
     {

@@ -1,7 +1,7 @@
-﻿namespace Nager.MessageHandler
+﻿namespace Nager.DataPackageHandler
 {
     /// <summary>
-    /// Data Analyze Status
+    /// Data Package Status
     /// </summary>
     public enum DataPackageStatus
     {

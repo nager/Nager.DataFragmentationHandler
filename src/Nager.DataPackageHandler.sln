@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nager.DataPackage", "Nager.DataPackage\Nager.DataPackage.csproj", "{65A61E10-19EE-4D07-A126-05AE07E10312}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nager.DataPackageHandler", "Nager.DataPackageHandler\Nager.DataPackageHandler.csproj", "{65A61E10-19EE-4D07-A126-05AE07E10312}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nager.DataPackage.UnitTest", "Nager.DataPackage.UnitTest\Nager.DataPackage.UnitTest.csproj", "{54E5AC88-CDB4-4A72-813E-6B308C13EB5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nager.DataPackageHandler.UnitTest", "Nager.DataPackageHandler.UnitTest\Nager.DataPackageHandler.UnitTest.csproj", "{54E5AC88-CDB4-4A72-813E-6B308C13EB5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
