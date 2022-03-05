@@ -3,28 +3,25 @@ using System;
 
 namespace Nager.MessageHandler
 {
-    public class MessageHandler
+    public class DataPackageHandler
     {
-        private readonly ILogger<MessageHandler> _logger;
-        private readonly IMessageAnalyzer _messageAnalyzer;
-        private readonly IMessageParser[] _messageParsers;
+        private readonly ILogger<DataPackageHandler> _logger;
+        private readonly IDataPackageAnalyzer _messageAnalyzer;
 
         private readonly byte[] _buffer;
         private int _bufferStartPosition = 0;
         private int _bufferEndPosition = 0;
-        private int _bufferDataLength => this._bufferEndPosition - this._bufferStartPosition;
+        private int BufferDataLength => this._bufferEndPosition - this._bufferStartPosition;
 
-        public event Action<MessageBase> NewMessage;
+        public event Action<byte[]> NewDataPackage;
 
-        public MessageHandler(
-            ILogger<MessageHandler> logger,
-            IMessageAnalyzer messageAnalyzer,
-            IMessageParser[] messageParsers,
+        public DataPackageHandler(
+            ILogger<DataPackageHandler> logger,
+            IDataPackageAnalyzer messageAnalyzer,
             int bufferSize = 1000)
         {
             this._logger = logger;
             this._messageAnalyzer = messageAnalyzer;
-            this._messageParsers = messageParsers;
 
             this._buffer = new byte[bufferSize];
         }
@@ -36,7 +33,7 @@ namespace Nager.MessageHandler
                 throw new BufferSizeTooSmallException();
             }
 
-            //Buffer cleanup required
+            //Check buffer cleanup required
             while (rawData.Length + this._bufferEndPosition > this._buffer.Length)
             {
                 if (this.CleanupViaMove())
@@ -77,8 +74,8 @@ namespace Nager.MessageHandler
              * └──────────────────────────┘
             */
 
-            var bufferDataLength = this._bufferDataLength;
-            Array.Copy(this._buffer, this._bufferStartPosition, this._buffer, 0, this._bufferDataLength);
+            var bufferDataLength = this.BufferDataLength;
+            Array.Copy(this._buffer, this._bufferStartPosition, this._buffer, 0, this.BufferDataLength);
             this._bufferStartPosition = 0;
             this._bufferEndPosition = bufferDataLength;
 
@@ -101,52 +98,37 @@ namespace Nager.MessageHandler
              * └──────────────────────────┘
             */
 
-            var bufferDataLength = this._bufferDataLength - requiredSize;
+            var bufferDataLength = this.BufferDataLength - requiredSize;
             Array.Copy(this._buffer, 0, this._buffer, requiredSize, bufferDataLength);
             this._bufferEndPosition = bufferDataLength;
         }
 
         private bool ProcessBuffer()
         {
-            var data = this._buffer.AsSpan().Slice(this._bufferStartPosition, this._bufferDataLength);
+            var data = this._buffer.AsSpan().Slice(this._bufferStartPosition, this.BufferDataLength);
 
             var analyzeResult = this._messageAnalyzer.Analyze(data);
-            if (!analyzeResult.MessageAvailable)
+            switch (analyzeResult.DataPackageStatus)
             {
-                return false;
-            }
-
-            if (analyzeResult.MessageAvailable &&
-                !analyzeResult.MessageComplete)
-            {
-                this._logger?.LogInformation($"{nameof(ProcessBuffer)} - Corrupt message remove");
-                this.RemoveLastMessage(analyzeResult.MessageEndIndex);
-                return true;
-            }
-
-            var messageData = data.Slice(analyzeResult.MessageStartIndex, analyzeResult.MessageLength);
-
-            MessageBase message = default;
-            foreach (var messageParser in this._messageParsers)
-            {
-                message = messageParser.Parse(messageData);
-                if (message != null)
-                {
+                case DataPackageStatus.NotAvailable:
+                    return false;
+                case DataPackageStatus.Uncompleted:
+                    return false;
+                case DataPackageStatus.Truncated:
+                    this._logger?.LogInformation($"{nameof(ProcessBuffer)} - Truncated message remove");
+                    this.RemoveLastMessage(analyzeResult.DataPackageEndIndex);
+                    return true;
+                case DataPackageStatus.Available:
                     break;
-                }
+                default:
+                    throw new NotImplementedException("DataAnalyzeStatus is unknown");
             }
 
-            if (message == default)
-            {
-                var hex = BitConverter.ToString(messageData.ToArray());
-                this._logger?.LogDebug($"{nameof(ProcessBuffer)} - Cannot parse message {hex}");
-            }
-            else
-            {
-                this.NewMessage?.Invoke(message);
-            }
+            var messageData = data.Slice(analyzeResult.ContentStartIndex, analyzeResult.ContentEndIndex - analyzeResult.ContentStartIndex);
 
-            this.RemoveLastMessage(analyzeResult.MessageEndIndex);
+            this.NewDataPackage?.Invoke(messageData.ToArray());
+
+            this.RemoveLastMessage(analyzeResult.DataPackageEndIndex);
 
             return this._bufferStartPosition != this._bufferEndPosition;
         }
