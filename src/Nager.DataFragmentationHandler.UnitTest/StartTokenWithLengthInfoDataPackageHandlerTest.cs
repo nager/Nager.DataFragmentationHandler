@@ -14,7 +14,7 @@ namespace Nager.DataFragmentationHandler.UnitTest
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(0);
 
         [TestMethod]
-        public void MessageHandler_CompleteMessage()
+        public void MessageHandler_CompleteMessageWithPartOfNext()
         {
             var loggerMock = LoggerHelper.GetLogger<DataPackageHandler>();
             var dataPackageAnalyzer = new StartTokenWithLengthInfoDataPackageAnalyzer(0x01);
@@ -22,6 +22,26 @@ namespace Nager.DataFragmentationHandler.UnitTest
             var dataPackageHandler = new DataPackageHandler(loggerMock.Object, dataPackageAnalyzer);
             dataPackageHandler.NewDataPackage += this.NewDataPackage;
             dataPackageHandler.AddData(new byte[] { 0x01, 0x06, 0x10, 0x65, 0x6c, 0x6c, 0x01, 0x06 });
+            dataPackageHandler.NewDataPackage -= this.NewDataPackage;
+
+            var isTimeout = !this._semaphoreSlim.Wait(1000);
+
+            Assert.IsFalse(isTimeout, "Run into timeout");
+            Assert.AreEqual(1, this._receivedDataPackageCount);
+            Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 0x01, 0x06, 0x10, 0x65, 0x6c, 0x6c }, this._dataPackage.RawData));
+            Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 0x10, 0x65, 0x6c, 0x6c }, this._dataPackage.Data.ToArray()));
+        }
+
+        [TestMethod]
+        public void MessageHandler_FragmentedData()
+        {
+            var loggerMock = LoggerHelper.GetLogger<DataPackageHandler>();
+            var dataPackageAnalyzer = new StartTokenWithLengthInfoDataPackageAnalyzer(0x01);
+
+            var dataPackageHandler = new DataPackageHandler(loggerMock.Object, dataPackageAnalyzer);
+            dataPackageHandler.NewDataPackage += this.NewDataPackage;
+            dataPackageHandler.AddData(new byte[] { 0x01 });
+            dataPackageHandler.AddData(new byte[] { 0x06, 0x10, 0x65, 0x6c, 0x6c });
             dataPackageHandler.NewDataPackage -= this.NewDataPackage;
 
             var isTimeout = !this._semaphoreSlim.Wait(1000);

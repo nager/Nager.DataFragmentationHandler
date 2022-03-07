@@ -25,6 +25,16 @@ namespace Nager.DataFragmentationHandler
                 };
             }
 
+            if (data.Length == 1)
+            {
+                // Only startToken is available, wait for more data
+                return new DataPackageAnalyzeResult
+                {
+                    Status = DataPackageStatus.Uncompleted,
+                    StartIndex = messageStartIndex
+                };
+            }
+
             var messageLength = data.Slice(messageStartIndex)[1];
 
             if (messageLength > data.Length)
