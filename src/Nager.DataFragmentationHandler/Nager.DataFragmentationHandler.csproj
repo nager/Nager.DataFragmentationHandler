@@ -3,17 +3,17 @@
   <PropertyGroup>
     <Authors>Tino Hager</Authors>
     <Company>nager.at</Company>
-    <Description>Process raw bytes to DataPackages with a buffer</Description>
+    <Description>Process fragmented bytes via a buffer to packages</Description>
     
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     
     <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/nager/Nager.DataPackageHandler</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/nager/Nager.DataFragmentationHandler</PackageProjectUrl>
     <PackageTags></PackageTags>
     
-    <RepositoryUrl>https://github.com/nager/Nager.DataPackageHandler</RepositoryUrl>
+    <RepositoryUrl>https://github.com/nager/Nager.DataFragmentationHandler</RepositoryUrl>
     
     <TargetFramework>netstandard2.1</TargetFramework>
     

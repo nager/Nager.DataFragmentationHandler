@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nager.DataPackageHandler\Nager.DataPackageHandler.csproj" />
+    <ProjectReference Include="..\Nager.DataFragmentationHandler\Nager.DataFragmentationHandler.csproj" />
   </ItemGroup>
 
 </Project>
