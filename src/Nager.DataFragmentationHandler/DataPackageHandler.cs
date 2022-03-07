@@ -5,7 +5,7 @@ namespace Nager.DataFragmentationHandler
 {
     public class DataPackageHandler
     {
-        private readonly ILogger<DataPackageHandler> _logger;
+        private readonly ILogger _logger;
         private readonly IDataPackageAnalyzer _dataPackageAnalyzer;
 
         private readonly byte[] _buffer;
@@ -13,10 +13,10 @@ namespace Nager.DataFragmentationHandler
         private int _bufferEndPosition = 0;
         private int BufferDataLength => this._bufferEndPosition - this._bufferStartPosition;
 
-        public event Action<byte[]> NewDataPackage;
+        public event Action<DataPackage> NewDataPackage;
 
         public DataPackageHandler(
-            ILogger<DataPackageHandler> logger,
+            ILogger logger,
             IDataPackageAnalyzer dataPackageAnalyzer,
             int bufferSize = 1000)
         {
@@ -108,7 +108,7 @@ namespace Nager.DataFragmentationHandler
             var data = this._buffer.AsSpan().Slice(this._bufferStartPosition, this.BufferDataLength);
 
             var analyzeResult = this._dataPackageAnalyzer.Analyze(data);
-            switch (analyzeResult.DataPackageStatus)
+            switch (analyzeResult.Status)
             {
                 case DataPackageStatus.NotAvailable:
                     return false;
@@ -116,7 +116,7 @@ namespace Nager.DataFragmentationHandler
                     return false;
                 case DataPackageStatus.Truncated:
                     this._logger?.LogInformation($"{nameof(ProcessBuffer)} - Truncated message remove");
-                    this.RemoveLastMessage(analyzeResult.DataPackageEndIndex);
+                    this.RemoveLastMessage(analyzeResult.EndIndex);
                     return true;
                 case DataPackageStatus.Available:
                     break;
@@ -124,11 +124,17 @@ namespace Nager.DataFragmentationHandler
                     throw new NotImplementedException("DataAnalyzeStatus is unknown");
             }
 
-            var dataPackage = data.Slice(analyzeResult.ContentStartIndex, analyzeResult.ContentEndIndex - analyzeResult.ContentStartIndex);
+            var rawData = data.Slice(analyzeResult.StartIndex, analyzeResult.EndIndex - analyzeResult.StartIndex);
+            var dataPackage = new DataPackage
+            {
+                RawData = rawData.ToArray(),
+                ContentStartIndex = analyzeResult.ContentStartIndex,
+                ContentEndIndex = analyzeResult.ContentEndIndex - analyzeResult.ContentStartIndex
+            };
 
-            this.NewDataPackage?.Invoke(dataPackage.ToArray());
+            this.NewDataPackage?.Invoke(dataPackage);
 
-            this.RemoveLastMessage(analyzeResult.DataPackageEndIndex);
+            this.RemoveLastMessage(analyzeResult.EndIndex);
 
             return this._bufferStartPosition != this._bufferEndPosition;
         }

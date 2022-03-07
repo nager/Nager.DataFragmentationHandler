@@ -22,7 +22,7 @@ namespace Nager.DataFragmentationHandler
             {
                 return new DataPackageAnalyzeResult
                 {
-                    DataPackageStatus = DataPackageStatus.NotAvailable
+                    Status = DataPackageStatus.NotAvailable
                 };
             }
 
@@ -30,8 +30,8 @@ namespace Nager.DataFragmentationHandler
             {
                 return new DataPackageAnalyzeResult
                 {
-                    DataPackageStatus = DataPackageStatus.Truncated,
-                    DataPackageEndIndex = messageStartIndex
+                    Status = DataPackageStatus.Truncated,
+                    EndIndex = messageStartIndex
                 };
             }
 
@@ -40,15 +40,15 @@ namespace Nager.DataFragmentationHandler
             {
                 return new DataPackageAnalyzeResult
                 {
-                    DataPackageStatus = DataPackageStatus.Uncompleted
+                    Status = DataPackageStatus.Uncompleted
                 };
             }
 
             return new DataPackageAnalyzeResult
             {
-                DataPackageStatus = DataPackageStatus.Available,
-                DataPackageStartIndex = messageStartIndex,
-                DataPackageEndIndex = messageEndIndex + 1,
+                Status = DataPackageStatus.Available,
+                StartIndex = messageStartIndex,
+                EndIndex = messageEndIndex + 1,
                 ContentStartIndex = messageStartIndex + 1,
                 ContentEndIndex = messageEndIndex
             };

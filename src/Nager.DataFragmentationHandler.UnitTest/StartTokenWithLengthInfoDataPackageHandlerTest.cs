@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nager.DataFragmentationHandler.UnitTest.Helpers;
+using System.Linq;
 using System.Threading;
 
 namespace Nager.DataFragmentationHandler.UnitTest
@@ -8,6 +9,8 @@ namespace Nager.DataFragmentationHandler.UnitTest
     public class StartTokenWithLengthInfoDataPackageHandlerTest
     {
         private int _receivedDataPackageCount = 0;
+        private DataPackage _dataPackage;
+
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(0);
 
         [TestMethod]
@@ -25,11 +28,15 @@ namespace Nager.DataFragmentationHandler.UnitTest
 
             Assert.IsFalse(isTimeout, "Run into timeout");
             Assert.AreEqual(1, this._receivedDataPackageCount);
+            Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 0x01, 0x06, 0x10, 0x65, 0x6c, 0x6c }, this._dataPackage.RawData));
+            Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 0x10, 0x65, 0x6c, 0x6c }, this._dataPackage.Data.ToArray()));
         }
 
-        private void NewDataPackage(byte[] message)
+        private void NewDataPackage(DataPackage dataPackage)
         {
             this._receivedDataPackageCount++;
+            this._dataPackage = dataPackage;
+
             this._semaphoreSlim.Release();
         }
     }

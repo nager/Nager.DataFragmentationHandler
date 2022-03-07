@@ -20,8 +20,8 @@ namespace Nager.DataFragmentationHandler
                 // Truncated message without startToken available
                 return new DataPackageAnalyzeResult
                 {
-                    DataPackageStatus = DataPackageStatus.Truncated,
-                    DataPackageEndIndex = data.Length + 1
+                    Status = DataPackageStatus.Truncated,
+                    EndIndex = data.Length + 1
                 };
             }
 
@@ -31,16 +31,16 @@ namespace Nager.DataFragmentationHandler
             {
                 return new DataPackageAnalyzeResult
                 {
-                    DataPackageStatus = DataPackageStatus.Uncompleted,
-                    DataPackageStartIndex = messageStartIndex
+                    Status = DataPackageStatus.Uncompleted,
+                    StartIndex = messageStartIndex
                 };
             }
 
             return new DataPackageAnalyzeResult
             {
-                DataPackageStatus = DataPackageStatus.Available,
-                DataPackageStartIndex = messageStartIndex,
-                DataPackageEndIndex = messageStartIndex + messageLength,
+                Status = DataPackageStatus.Available,
+                StartIndex = messageStartIndex,
+                EndIndex = messageStartIndex + messageLength,
                 ContentStartIndex = messageStartIndex + 2, //StartToken + LengthInfo
                 ContentEndIndex = messageStartIndex + messageLength
             };

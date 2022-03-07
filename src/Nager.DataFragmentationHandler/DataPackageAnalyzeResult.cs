@@ -2,14 +2,14 @@
 {
     public class DataPackageAnalyzeResult
     {
-        public DataPackageStatus DataPackageStatus { get; set; }
+        public DataPackageStatus Status { get; set; }
 
-        public int DataPackageStartIndex { get; set; }
-        public int DataPackageEndIndex { get; set; }
+        public int StartIndex { get; set; }
+        public int EndIndex { get; set; }
 
         public int ContentStartIndex { get; set; }
         public int ContentEndIndex { get; set; }
 
-        public int DataPackageLength { get { return this.DataPackageEndIndex - this.DataPackageStartIndex; } }
+        public int Length { get { return this.EndIndex - this.StartIndex; } }
     }
 }
