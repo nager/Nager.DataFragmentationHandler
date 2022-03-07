@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 
-namespace Nager.DataPackageHandler
+namespace Nager.DataFragmentationHandler
 {
     public class DataPackageHandler
     {

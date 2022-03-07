@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nager.DataPackageHandler
+namespace Nager.DataFragmentationHandler
 {
     public interface IDataPackageAnalyzer
     {

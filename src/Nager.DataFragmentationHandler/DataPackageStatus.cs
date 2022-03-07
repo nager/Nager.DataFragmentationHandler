@@ -1,4 +1,4 @@
-﻿namespace Nager.DataPackageHandler
+﻿namespace Nager.DataFragmentationHandler
 {
     /// <summary>
     /// Data Package Status
