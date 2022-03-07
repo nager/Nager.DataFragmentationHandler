@@ -1,8 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using System;
 
 namespace Nager.DataFragmentationHandler
 {
+    /// <summary>
+    /// DataPackageHandler
+    /// </summary>
     public class DataPackageHandler
     {
         private readonly ILogger _logger;
@@ -13,19 +17,38 @@ namespace Nager.DataFragmentationHandler
         private int _bufferEndPosition = 0;
         private int BufferDataLength => this._bufferEndPosition - this._bufferStartPosition;
 
+        /// <summary>
+        /// New DataPackage available
+        /// </summary>
         public event Action<DataPackage> NewDataPackage;
 
+        /// <summary>
+        /// DataPackage Handler
+        /// </summary>
+        /// <param name="dataPackageAnalyzer"></param>
+        /// <param name="bufferSize"></param>
+        /// <param name="logger"></param>
         public DataPackageHandler(
-            ILogger logger,
             IDataPackageAnalyzer dataPackageAnalyzer,
-            int bufferSize = 1000)
+            int bufferSize = 1024,
+            ILogger logger = default)
         {
+            if (logger == default)
+            {
+                logger = NullLogger.Instance;
+            }
             this._logger = logger;
+
             this._dataPackageAnalyzer = dataPackageAnalyzer;
 
             this._buffer = new byte[bufferSize];
         }
 
+        /// <summary>
+        /// Add new data from device
+        /// </summary>
+        /// <param name="rawData"></param>
+        /// <exception cref="BufferSizeTooSmallException"></exception>
         public void AddData(byte[] rawData)
         {
             if (rawData.Length > this._buffer.Length)

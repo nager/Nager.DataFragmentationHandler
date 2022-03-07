@@ -19,7 +19,7 @@ namespace Nager.DataFragmentationHandler.UnitTest
             var loggerMock = LoggerHelper.GetLogger<DataPackageHandler>();
             var dataPackageAnalyzer = new StartTokenWithLengthInfoDataPackageAnalyzer(0x01);
 
-            var dataPackageHandler = new DataPackageHandler(loggerMock.Object, dataPackageAnalyzer);
+            var dataPackageHandler = new DataPackageHandler(dataPackageAnalyzer, logger: loggerMock.Object);
             dataPackageHandler.NewDataPackage += this.NewDataPackage;
             dataPackageHandler.AddData(new byte[] { 0x01, 0x06, 0x10, 0x65, 0x6c, 0x6c, 0x01, 0x06 });
             dataPackageHandler.NewDataPackage -= this.NewDataPackage;
@@ -38,7 +38,7 @@ namespace Nager.DataFragmentationHandler.UnitTest
             var loggerMock = LoggerHelper.GetLogger<DataPackageHandler>();
             var dataPackageAnalyzer = new StartTokenWithLengthInfoDataPackageAnalyzer(0x01);
 
-            var dataPackageHandler = new DataPackageHandler(loggerMock.Object, dataPackageAnalyzer);
+            var dataPackageHandler = new DataPackageHandler(dataPackageAnalyzer, logger: loggerMock.Object);
             dataPackageHandler.NewDataPackage += this.NewDataPackage;
             dataPackageHandler.AddData(new byte[] { 0x01 });
             dataPackageHandler.AddData(new byte[] { 0x06, 0x10, 0x65, 0x6c, 0x6c });
