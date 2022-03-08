@@ -2,16 +2,24 @@
 
 namespace Nager.DataFragmentationHandler
 {
+    /// <summary>
+    /// StartToken with message length info on second position DataPackageAnalyzer
+    /// </summary>
     public class StartTokenWithLengthInfoDataPackageAnalyzer : IDataPackageAnalyzer
     {
         private readonly byte _startToken;
 
+        /// <summary>
+        /// StartToken with message length info on second position DataPackageAnalyzer
+        /// </summary>
+        /// <param name="startToken"></param>
         public StartTokenWithLengthInfoDataPackageAnalyzer(
             byte startToken)
         {
             this._startToken = startToken;
         }
 
+        /// <inheritdoc/>
         public DataPackageAnalyzeResult Analyze(Span<byte> data)
         {
             var messageStartIndex = data.IndexOf(this._startToken);
@@ -21,7 +29,7 @@ namespace Nager.DataFragmentationHandler
                 return new DataPackageAnalyzeResult
                 {
                     Status = DataPackageStatus.Truncated,
-                    EndIndex = data.Length + 1
+                    EndIndex = data.Length
                 };
             }
 
@@ -36,6 +44,15 @@ namespace Nager.DataFragmentationHandler
             }
 
             var messageLength = data.Slice(messageStartIndex)[1];
+            if (messageLength == 0)
+            {
+                // Corrupt message length is not possible
+                return new DataPackageAnalyzeResult
+                {
+                    Status = DataPackageStatus.Truncated,
+                    EndIndex = 1
+                };
+            }
 
             if (messageLength > data.Length)
             {

@@ -2,11 +2,19 @@
 
 namespace Nager.DataFragmentationHandler
 {
+    /// <summary>
+    /// StartToken and EndToken DataPackageAnalyzer
+    /// </summary>
     public class StartEndTokenDataPackageAnalyzer : IDataPackageAnalyzer
     {
         private readonly byte _startToken;
         private readonly byte _endToken;
 
+        /// <summary>
+        /// StartToken and EndToken DataPackageAnalyzer
+        /// </summary>
+        /// <param name="startToken"></param>
+        /// <param name="endToken"></param>
         public StartEndTokenDataPackageAnalyzer(
             byte startToken,
             byte endToken)
@@ -14,7 +22,8 @@ namespace Nager.DataFragmentationHandler
             this._startToken = startToken;
             this._endToken = endToken;
         }
-
+        
+        /// <inheritdoc/>
         public DataPackageAnalyzeResult Analyze(Span<byte> data)
         {
             var messageStartIndex = data.IndexOf(this._startToken);
@@ -35,7 +44,7 @@ namespace Nager.DataFragmentationHandler
                 };
             }
 
-            var messageEndIndex = data.IndexOf(this._endToken);
+            var messageEndIndex = data.Slice(1).IndexOf(this._endToken);
             if (messageEndIndex == -1)
             {
                 return new DataPackageAnalyzeResult
@@ -44,13 +53,23 @@ namespace Nager.DataFragmentationHandler
                 };
             }
 
+            var messageSecondStartIndex = data.Slice(1).IndexOf(this._startToken);
+            if (messageSecondStartIndex != -1 && messageEndIndex > messageSecondStartIndex)
+            {
+                return new DataPackageAnalyzeResult
+                {
+                    Status = DataPackageStatus.Truncated,
+                    EndIndex = messageSecondStartIndex
+                };
+            }
+
             return new DataPackageAnalyzeResult
             {
                 Status = DataPackageStatus.Available,
                 StartIndex = messageStartIndex,
-                EndIndex = messageEndIndex + 1,
+                EndIndex = messageEndIndex + 2,
                 ContentStartIndex = messageStartIndex + 1,
-                ContentEndIndex = messageEndIndex
+                ContentEndIndex = messageEndIndex + 1
             };
         }
     }

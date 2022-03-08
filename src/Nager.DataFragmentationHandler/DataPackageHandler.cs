@@ -128,6 +128,11 @@ namespace Nager.DataFragmentationHandler
 
         private bool ProcessBuffer()
         {
+            if (this._bufferStartPosition == this._bufferEndPosition)
+            {
+                return false;
+            }
+
             var data = this._buffer.AsSpan().Slice(this._bufferStartPosition, this.BufferDataLength);
 
             var analyzeResult = this._dataPackageAnalyzer.Analyze(data);

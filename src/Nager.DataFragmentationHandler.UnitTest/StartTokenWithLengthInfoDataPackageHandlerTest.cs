@@ -52,6 +52,23 @@ namespace Nager.DataFragmentationHandler.UnitTest
             Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 0x10, 0x65, 0x6c, 0x6c }, this._dataPackage.Data.ToArray()));
         }
 
+        [TestMethod]
+        public void MessageHandler_InvalidLengthInfoData()
+        {
+            var loggerMock = LoggerHelper.GetLogger<DataPackageHandler>();
+            var dataPackageAnalyzer = new StartTokenWithLengthInfoDataPackageAnalyzer(0x01);
+
+            var dataPackageHandler = new DataPackageHandler(dataPackageAnalyzer, logger: loggerMock.Object);
+            dataPackageHandler.NewDataPackage += this.NewDataPackage;
+            dataPackageHandler.AddData(new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            dataPackageHandler.NewDataPackage -= this.NewDataPackage;
+
+            var isTimeout = !this._semaphoreSlim.Wait(100);
+
+            Assert.IsTrue(isTimeout, "Run not into timeout, no data available");
+            Assert.AreEqual(0, this._receivedDataPackageCount);
+        }
+
         private void NewDataPackage(DataPackage dataPackage)
         {
             this._receivedDataPackageCount++;
