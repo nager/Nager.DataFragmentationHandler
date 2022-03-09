@@ -11,6 +11,7 @@ namespace Nager.DataFragmentationHandler
     {
         private readonly ILogger _logger;
         private readonly IDataPackageAnalyzer _dataPackageAnalyzer;
+        private readonly object _syncLock = new object();
 
         private readonly byte[] _buffer;
         private int _bufferStartPosition = 0;
@@ -21,6 +22,11 @@ namespace Nager.DataFragmentationHandler
         /// New DataPackage available
         /// </summary>
         public event Action<DataPackage> NewDataPackage;
+
+        /// <summary>
+        /// Truncated data was removed
+        /// </summary>
+        public event Action TruncatedDataRemoved;
 
         /// <summary>
         /// DataPackage Handler
@@ -51,31 +57,34 @@ namespace Nager.DataFragmentationHandler
         /// <exception cref="BufferSizeTooSmallException"></exception>
         public void AddData(byte[] rawData)
         {
-            if (rawData.Length > this._buffer.Length)
+            lock (this._syncLock)
             {
-                throw new BufferSizeTooSmallException();
-            }
-
-            //Check buffer cleanup required
-            while (rawData.Length + this._bufferEndPosition > this._buffer.Length)
-            {
-                if (this.CleanupViaMove())
+                if (rawData.Length > this._buffer.Length)
                 {
-                    continue;
+                    throw new BufferSizeTooSmallException();
                 }
 
-                var requiredSize = rawData.Length - (this._buffer.Length - this._bufferEndPosition);
-                this.CleanupViaRemove(requiredSize);
+                //Check buffer cleanup required
+                while (rawData.Length + this._bufferEndPosition > this._buffer.Length)
+                {
+                    if (this.CleanupViaMove())
+                    {
+                        continue;
+                    }
 
-                break;
-            }
+                    var requiredSize = rawData.Length - (this._buffer.Length - this._bufferEndPosition);
+                    this.CleanupViaRemove(requiredSize);
 
-            Array.Copy(rawData, 0, this._buffer, this._bufferEndPosition, rawData.Length);
-            this._bufferEndPosition += rawData.Length;
+                    break;
+                }
 
-            while (this.ProcessBuffer())
-            {
-                //additional processing steps required
+                Array.Copy(rawData, 0, this._buffer, this._bufferEndPosition, rawData.Length);
+                this._bufferEndPosition += rawData.Length;
+
+                while (this.ProcessBuffer())
+                {
+                    //additional processing steps required
+                }
             }
         }
 
@@ -143,7 +152,8 @@ namespace Nager.DataFragmentationHandler
                 case DataPackageStatus.Uncompleted:
                     return false;
                 case DataPackageStatus.Truncated:
-                    this._logger?.LogInformation($"{nameof(ProcessBuffer)} - Truncated message remove");
+                    this.TruncatedDataRemoved?.Invoke();
+                    this._logger?.LogInformation($"{nameof(ProcessBuffer)} - Truncated data removed");
                     this.RemoveLastMessage(analyzeResult.EndIndex);
                     return true;
                 case DataPackageStatus.Available:
