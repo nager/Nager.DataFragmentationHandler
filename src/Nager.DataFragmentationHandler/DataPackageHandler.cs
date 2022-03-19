@@ -174,7 +174,19 @@ namespace Nager.DataFragmentationHandler
 
             this.RemoveLastMessage(analyzeResult.EndIndex);
 
-            return this._bufferStartPosition != this._bufferEndPosition;
+            if (this._bufferStartPosition == this._bufferEndPosition)
+            {
+                this.ResetBufferPosition();
+                return false;
+            }
+
+            return true;
+        }
+
+        private void ResetBufferPosition()
+        {
+            this._bufferStartPosition = 0;
+            this._bufferEndPosition = 0;
         }
 
         private void RemoveLastMessage(int messageLength)
